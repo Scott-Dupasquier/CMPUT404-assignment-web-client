@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
-# Copyright 2016 Abram Hindle, https://github.com/tywtyw2002, and https://github.com/treedust
+# Copyright 2020 Scott Dupasquier
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 
 import sys
 import socket
-import re
 # you may use urllib to encode data appropriately
 import urllib.parse
 
@@ -41,13 +40,29 @@ class HTTPClient(object):
         return None
 
     def get_code(self, data):
-        return None
+        # The response code is always in position 1 after splitting the data
+        return int(data.split()[1])
 
-    def get_headers(self,data):
+    def get_headers(self, data):
         return None
 
     def get_body(self, data):
-        return None
+        body = ""
+        index = 0
+        data = data.split('\n')
+
+        # '\r' alone marks the end of headers and beginning of the body
+        while data[index] != '\r':
+            index += 1
+
+        index += 1 # Move past the \r since it shouldn't be returned
+        while index < len(data):
+            # Concatenate the rest of the strings together and re-insert the
+            # new line characters to get the body
+            body += data[index] + '\n'
+            index += 1
+        
+        return body
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -68,20 +83,78 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
-        code = 500
-        body = ""
+        # Parse the URL and retrieve the hostname
+        url_data = urllib.parse.urlparse(url)
+        host = url_data.netloc
+        if ':' in host:
+            host = host.split(':')[0]
+        port = url_data.port
+
+        # Create the payload
+        payload = "GET " + url_data.path + " HTTP/1.1\r\nHost: " + host + ":" + str(port) + "\r\nConnection: close\r\n\r\n"
+
+        # Connect to the site
+        self.connect(host, port)
+
+        # Send the payload
+        self.sendall(payload)
+
+        # Get response back and retrieve code and body
+        data = self.recvall(self.socket)
+        code = self.get_code(data)
+        body = self.get_body(data)
+        
+        self.close() # Need to close the socket
+
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
-        code = 500
-        body = ""
+        # Parse the URL and retrieve the hostname
+        url_data = urllib.parse.urlparse(url)
+        host = url_data.netloc
+        if ':' in host:
+            host = host.split(':')[0]
+        port = url_data.port
+
+        # Get the content length and form the key-value pairs in html format
+        content_len = 0
+        pairs = ""
+        if args:
+            # Should get this result: pairs = "a=aaaaaaaaaaaaa&b=bbbbbbbbbbbbbbbbbbbbbb&c=c&d=012345\r67890\n2321321\n\r"
+            for arg in args.keys():
+                pairs += arg + "="
+                # https://stackoverflow.com/questions/4415259/convert-regular-python-string-to-raw-string
+                value = args[arg].encode('unicode-escape').decode('unicode-escape')
+                pairs += value + "&" # Need & for the next key-value pair
+
+            # Remove the last character since it is &
+            pairs = pairs[:-1]
+            content_len = len(pairs) # Get content length
+
+        # Create the payload
+        payload = "POST " + url_data.path + " HTTP/1.1\r\n" + \
+        "Host: " + host + ":" + str(port) + "\r\n"\
+        "Content-Length: " + str(content_len) + "\r\n\r\n" + pairs
+
+        # Connect to the site
+        self.connect(host, port)
+
+        # Send payload
+        self.sendall(payload)
+
+        # Get response back and retrieve the code and data
+        data = self.recvall(self.socket)
+        code = self.get_code(data)
+        body = self.get_body(data)
+
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
         if (command == "POST"):
             return self.POST( url, args )
         else:
-            return self.GET( url, args )
+            response = self.GET( url, args )
+            return response
     
 if __name__ == "__main__":
     client = HTTPClient()
