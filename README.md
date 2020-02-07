@@ -18,3 +18,12 @@ examples thus some of the code is Copyright © 2001-2013 Python
 Software Foundation; All Rights Reserved under the PSF license (GPL
 compatible) http://docs.python.org/2/library/socketserver.html
 
+This forked repository also contains contributions from Scott Dupasquier in 2020 and is under the same license
+
+References
+==========
+Noah Kryzanowski (ccid nkryzano) for clarification on request formatting
+
+https://docs.python.org/3/library/urllib.parse.html
+
+Jolly1234 (https://stackoverflow.com/users/1490677/jolly1234). Convert regular Python string to raw string. Stack Overflow. URL: https://stackoverflow.com/questions/4415259/convert-regular-python-string-to-raw-string
