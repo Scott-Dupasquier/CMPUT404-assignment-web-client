@@ -88,7 +88,10 @@ class HTTPClient(object):
         host = url_data.netloc
         if ':' in host:
             host = host.split(':')[0]
+
         port = url_data.port
+        if not port:
+            port = 0
 
         # Create the payload
         payload = "GET " + url_data.path + " HTTP/1.1\r\nHost: " + url_data.netloc + "\r\nConnection: close\r\n\r\n"
