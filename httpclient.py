@@ -133,7 +133,8 @@ class HTTPClient(object):
 
         # Create the payload
         payload = "POST " + url_data.path + " HTTP/1.1\r\n" + \
-        "Host: " + host + ":" + str(port) + "\r\n"\
+        "Host: " + host + ":" + str(port) + "\r\n" + \
+        "Content-Type: application/x-www-form-urlencoded\r\n" + \
         "Content-Length: " + str(content_len) + "\r\n\r\n" + pairs
 
         # Connect to the site
@@ -146,6 +147,8 @@ class HTTPClient(object):
         data = self.recvall(self.socket)
         code = self.get_code(data)
         body = self.get_body(data)
+
+        self.close()
 
         return HTTPResponse(code, body)
 
