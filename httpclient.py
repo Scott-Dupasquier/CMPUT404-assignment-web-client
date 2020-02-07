@@ -91,7 +91,7 @@ class HTTPClient(object):
         port = url_data.port
 
         # Create the payload
-        payload = "GET " + url_data.path + " HTTP/1.1\r\nHost: " + host + ":" + str(port) + "\r\nConnection: close\r\n\r\n"
+        payload = "GET " + url_data.path + " HTTP/1.1\r\nHost: " + url_data.netloc + "\r\nConnection: close\r\n\r\n"
 
         # Connect to the site
         self.connect(host, port)
@@ -123,7 +123,6 @@ class HTTPClient(object):
             # Should get this result: pairs = "a=aaaaaaaaaaaaa&b=bbbbbbbbbbbbbbbbbbbbbb&c=c&d=012345\r67890\n2321321\n\r"
             for arg in args.keys():
                 pairs += arg + "="
-                # https://stackoverflow.com/questions/4415259/convert-regular-python-string-to-raw-string
                 value = args[arg].encode('unicode-escape').decode('unicode-escape')
                 pairs += value + "&" # Need & for the next key-value pair
 
@@ -133,7 +132,7 @@ class HTTPClient(object):
 
         # Create the payload
         payload = "POST " + url_data.path + " HTTP/1.1\r\n" + \
-        "Host: " + host + ":" + str(port) + "\r\n" + \
+        "Host: " + url_data.netloc + "\r\n" + \
         "Content-Type: application/x-www-form-urlencoded\r\n" + \
         "Content-Length: " + str(content_len) + "\r\n\r\n" + pairs
 
